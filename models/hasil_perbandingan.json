@@ -1,0 +1,128 @@
+{
+  "BoF": {
+    "accuracy": 38.69,
+    "precision_macro": 37.57,
+    "recall_macro": 37.57,
+    "f1_macro": 37.55,
+    "per_class": {
+      "belumberbuah": {
+        "precision": 45.37,
+        "recall": 45.79,
+        "f1_score": 45.58,
+        "support": 107
+      },
+      "belumsiap": {
+        "precision": 41.61,
+        "recall": 43.85,
+        "f1_score": 42.7,
+        "support": 130
+      },
+      "sebagian": {
+        "precision": 27.94,
+        "recall": 26.76,
+        "f1_score": 27.34,
+        "support": 71
+      },
+      "siap": {
+        "precision": 35.34,
+        "recall": 33.88,
+        "f1_score": 34.6,
+        "support": 121
+      }
+    },
+    "confusion_matrix": [
+      [49, 27, 9, 22],
+      [22, 57, 20, 31],
+      [10, 20, 19, 22],
+      [27, 33, 20, 41]
+    ],
+    "waktu_training_s": 0.3242,
+    "waktu_prediksi_ms": 0.1812,
+    "pca_komponen": "Tidak",
+    "dimensi_fitur": 128
+  },
+  "BoF+HSV": {
+    "accuracy": 78.55,
+    "precision_macro": 77.88,
+    "recall_macro": 76.33,
+    "f1_macro": 76.84,
+    "per_class": {
+      "belumberbuah": {
+        "precision": 79.41,
+        "recall": 75.7,
+        "f1_score": 77.51,
+        "support": 107
+      },
+      "belumsiap": {
+        "precision": 81.75,
+        "recall": 86.15,
+        "f1_score": 83.9,
+        "support": 130
+      },
+      "sebagian": {
+        "precision": 73.68,
+        "recall": 59.15,
+        "f1_score": 65.62,
+        "support": 71
+      },
+      "siap": {
+        "precision": 76.69,
+        "recall": 84.3,
+        "f1_score": 80.31,
+        "support": 121
+      }
+    },
+    "confusion_matrix": [
+      [81, 8, 2, 16],
+      [9, 112, 5, 4],
+      [6, 12, 42, 11],
+      [6, 5, 8, 102]
+    ],
+    "waktu_training_s": 0.9661,
+    "waktu_prediksi_ms": 0.6734,
+    "pca_komponen": "Tidak",
+    "dimensi_fitur": 640
+  },
+  "BoF+HSV+SPM": {
+    "accuracy": 80.19,
+    "precision_macro": 78.86,
+    "recall_macro": 78.34,
+    "f1_macro": 78.47,
+    "per_class": {
+      "belumberbuah": {
+        "precision": 81.91,
+        "recall": 71.96,
+        "f1_score": 76.62,
+        "support": 107
+      },
+      "belumsiap": {
+        "precision": 82.86,
+        "recall": 89.23,
+        "f1_score": 85.93,
+        "support": 130
+      },
+      "sebagian": {
+        "precision": 68.12,
+        "recall": 66.2,
+        "f1_score": 67.14,
+        "support": 71
+      },
+      "siap": {
+        "precision": 82.54,
+        "recall": 85.95,
+        "f1_score": 84.21,
+        "support": 121
+      }
+    },
+    "confusion_matrix": [
+      [77, 15, 5, 10],
+      [8, 116, 4, 2],
+      [6, 8, 47, 10],
+      [3, 1, 13, 104]
+    ],
+    "waktu_training_s": 1.0587,
+    "waktu_prediksi_ms": 0.6875,
+    "pca_komponen": "647 komponen",
+    "dimensi_fitur": 647
+  }
+}

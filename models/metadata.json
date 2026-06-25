@@ -1,0 +1,16 @@
+{
+  "classes": {
+    "0": "belumberbuah",
+    "1": "belumsiap",
+    "2": "sebagian",
+    "3": "siap"
+  },
+  "feature_method": "BoF + HSV + SPM + PCA",
+  "orb_nfeatures": 500,
+  "image_size": [
+    128,
+    128
+  ],
+  "kmeans_clusters": 128,
+  "pca_components": 647
+}
