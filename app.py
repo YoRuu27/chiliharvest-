@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 
@@ -351,6 +352,90 @@ def build_response(prediction_id: int, confidence: float, image: np.ndarray):
     }
 
 
+PREDICTION_KEYS = {
+    0: "belumberbuah",
+    1: "belumsiap",
+    2: "sebagian",
+    3: "siap",
+}
+
+
+def encode_image_base64(image: np.ndarray) -> str:
+    success, buffer = cv2.imencode(".png", image)
+    if not success:
+        raise ValueError("Gagal encode gambar hasil segmentasi.")
+    return base64.b64encode(buffer).decode("utf-8")
+
+
+def build_segmentation_result(image: np.ndarray):
+    resized = cv2.resize(image, IMAGE_SIZE)
+    hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
+
+    green_mask = cv2.inRange(hsv, (35, 45, 35), (90, 255, 255))
+    orange_mask = cv2.inRange(hsv, (10, 70, 50), (28, 255, 255))
+    red_low = cv2.inRange(hsv, (0, 70, 50), (10, 255, 255))
+    red_high = cv2.inRange(hsv, (165, 70, 50), (180, 255, 255))
+    red_mask = cv2.bitwise_or(red_low, red_high)
+
+    candidate_mask = cv2.bitwise_or(green_mask, orange_mask)
+    candidate_mask = cv2.bitwise_or(candidate_mask, red_mask)
+
+    kernel = np.ones((3, 3), np.uint8)
+    candidate_mask = cv2.morphologyEx(candidate_mask, cv2.MORPH_OPEN, kernel)
+    candidate_mask = cv2.morphologyEx(candidate_mask, cv2.MORPH_CLOSE, kernel)
+
+    candidate_pixels = int(np.count_nonzero(candidate_mask))
+    total_pixels = int(candidate_mask.size)
+    candidate_area = round(candidate_pixels / total_pixels * 100, 2) if total_pixels else 0.0
+
+    if candidate_pixels > 0:
+        green_percentage = round(
+            np.count_nonzero(cv2.bitwise_and(green_mask, candidate_mask))
+            / candidate_pixels
+            * 100,
+            2,
+        )
+        orange_percentage = round(
+            np.count_nonzero(cv2.bitwise_and(orange_mask, candidate_mask))
+            / candidate_pixels
+            * 100,
+            2,
+        )
+        red_percentage = round(
+            np.count_nonzero(cv2.bitwise_and(red_mask, candidate_mask))
+            / candidate_pixels
+            * 100,
+            2,
+        )
+    else:
+        green_percentage = 0.0
+        orange_percentage = 0.0
+        red_percentage = 0.0
+
+    overlay = resized.copy()
+    overlay_color = np.zeros_like(resized)
+    overlay_color[:, :, 1] = 255
+    overlay = np.where(
+        candidate_mask[:, :, None] > 0,
+        cv2.addWeighted(resized, 0.55, overlay_color, 0.45, 0),
+        overlay,
+    )
+
+    return {
+        "segmented_color_percentages": {
+            "candidate_area": candidate_area,
+            "green": green_percentage,
+            "orange": orange_percentage,
+            "red": red_percentage,
+        },
+        "images": {
+            "input_resize": encode_image_base64(resized),
+            "mask": encode_image_base64(candidate_mask),
+            "overlay": encode_image_base64(overlay),
+        },
+    }
+
+
 @app.get("/health")
 def health():
     return jsonify(
@@ -413,8 +498,48 @@ def predict():
         return jsonify({"error": str(exc)}), 500
 
 
-if __name__ == "__main__":
-    import os
+@app.post("/predict-segmentation")
+def predict_segmentation():
+    if "image" not in request.files:
+        return jsonify({"error": "Field multipart 'image' wajib diisi."}), 400
 
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    try:
+        image = decode_image(request.files["image"])
+
+        if has_trained_model():
+            prediction_id, confidence = predict_with_model(image)
+        else:
+            prediction_id, confidence = predict_with_heuristic(image)
+
+        green, orange, red = calculate_color_ratio(image)
+        plant_status, reasons, recommendation = get_harvest_analysis(
+            prediction_id,
+            green,
+            orange,
+            red,
+        )
+        segmentation = build_segmentation_result(image)
+
+        return jsonify(
+            {
+                "prediction": PREDICTION_KEYS.get(prediction_id, "belumsiap"),
+                "confidence": round(float(confidence), 1),
+                "color_percentages": {
+                    "green": green,
+                    "orange": orange,
+                    "red": red,
+                },
+                "segmented_color_percentages": segmentation["segmented_color_percentages"],
+                "images": segmentation["images"],
+                "status": plant_status,
+                "alasan": reasons,
+                "rekomendasi": recommendation,
+                "note": "Segmentasi hanya analisis tambahan setelah prediksi, bukan penentu kelas SVM.",
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
